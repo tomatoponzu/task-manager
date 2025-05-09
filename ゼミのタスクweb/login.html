@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>ログイン</title>
+</head>
+<body>
+  <h2>ログイン</h2>
+  <input type="password" id="passwordInput" placeholder="パスワードを入力">
+  <button onclick="login()">ログイン</button>
+  <p id="error" style="color:red;"></p>
+
+  <script>
+    const correctPassword = "0920"; // ← ここでパスワードを設定！
+
+    function login() {
+      const input = document.getElementById("passwordInput").value;
+      if (input === correctPassword) {
+        localStorage.setItem("loggedIn", "true");
+        window.location.href = "index.html"; // タスク管理画面に遷移
+      } else {
+        document.getElementById("error").textContent = "パスワードが違います。";
+      }
+    }
+  </script>
+</body>
+</html>
