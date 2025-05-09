@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>メンバー詳細</title>
+  <style>
+    body { font-family: sans-serif; padding: 1rem; }
+    h1 { color: #49a6e9; }
+    .comment-box, .task-section { margin: 1rem 0; }
+    .custom-button {
+  background-color: #4CAF50; /* メインカラー（例） */
+  color: white;
+  padding: 6px 14px;
+  margin: 4px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+.custom-button:hover {
+  background-color: #45a049;
+}
+
+/* 入力欄（input[type=text]など） */
+.custom-input {
+  padding: 6px 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  margin-right: 6px;
+}
+    textarea { width: 100%; height: 60px; font-size: 1rem; }
+    input[type="text"] { width: 70%; padding: 0.5rem; margin-right: 0.5rem; }
+    ul { list-style: none; padding-left: 0; }
+    li { margin-bottom: 0.5rem; }
+    button { margin-left: 0.5rem; }
+  </style>
+</head>
+<body>
+  <a href="index.html">← 戻る</a>
+  <h1 id="memberName">メンバー名</h1>
+
+  <div class="comment-box">
+    <label for="comment">ひとことコメント:</label><br>
+    <textarea id="comment" placeholder="コメントを入力..."></textarea>
+  </div>
+
+  <div class="task-section">
+    <h2>抱えているタスク</h2>
+
+    <div>
+      <input type="text" id="newTaskInput" placeholder="新しいタスクを入力..." />
+      <button onclick="addTask()">追加</button>
+    </div>
+
+    <ul id="taskList"></ul>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const memberName = urlParams.get('name');
+    const commentKey = `comment_${memberName}`;
+    const taskKey = `tasks_${memberName}`;
+
+    document.getElementById('memberName').textContent = memberName || 'メンバー名';
+
+    const commentField = document.getElementById('comment');
+    const taskListEl = document.getElementById('taskList');
+    const newTaskInput = document.getElementById('newTaskInput');
+
+    // Load saved data
+    commentField.value = localStorage.getItem(commentKey) || '';
+
+    let tasks = JSON.parse(localStorage.getItem(taskKey)) || [];
+
+    function renderTasks() {
+      taskListEl.innerHTML = '';
+      tasks.forEach((task, index) => {
+        const li = document.createElement('li');
+
+        const span = document.createElement('span');
+        span.textContent = task;
+        li.appendChild(span);
+
+        const editBtn = document.createElement('button');
+        editBtn.textContent = '編集';
+        editBtn.onclick = () => {
+          const newTask = prompt('新しいタスク名:', task);
+          if (newTask !== null && newTask.trim()) {
+            tasks[index] = newTask.trim();
+            saveTasks();
+          }
+        };
+        li.appendChild(editBtn);
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = '削除';
+        deleteBtn.onclick = () => {
+          tasks.splice(index, 1);
+          saveTasks();
+        };
+        li.appendChild(deleteBtn);
+
+        taskListEl.appendChild(li);
+      });
+    }
+
+    function addTask() {
+      const taskText = newTaskInput.value.trim();
+      if (taskText) {
+        tasks.push(taskText);
+        newTaskInput.value = '';
+        saveTasks();
+      }
+    }
+
+    function saveTasks() {
+      localStorage.setItem(taskKey, JSON.stringify(tasks));
+      renderTasks();
+    }
+
+    commentField.addEventListener('input', () => {
+      localStorage.setItem(commentKey, commentField.value);
+    });
+
+    renderTasks();
+  </script>
+</body>
+</html>
