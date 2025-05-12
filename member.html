@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>メンバー詳細</title>
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+1p&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js"></script>
+  <style>
+    body {
+      font-family: 'M PLUS 1p', sans-serif;
+      padding: 1rem;
+    }
+    h1 {
+      color: #49a6e9;
+    }
+    .comment-box, .task-section {
+      margin: 1rem 0;
+    }
+    .custom-button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 6px 14px;
+      margin: 4px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.2s ease;
+    }
+    .custom-button:hover {
+      background-color: #45a049;
+    }
+    .custom-input {
+      padding: 6px 10px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin-right: 6px;
+    }
+    textarea {
+      width: 100%;
+      height: 60px;
+      font-size: 1rem;
+    }
+    input[type="text"] {
+      width: 70%;
+      padding: 0.5rem;
+      margin-right: 0.5rem;
+    }
+    ul {
+      list-style: none;
+      padding-left: 0;
+    }
+    li {
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+    }
+    button {
+      margin-left: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html">← 戻る</a>
+  <h1 id="memberName">メンバー名</h1>
+  <div class="comment-box">
+    <label for="comment">ひとことコメント:</label><br>
+    <textarea id="comment" placeholder="コメントを入力..."></textarea>
+  </div>
+  <div class="task-section">
+    <h2>抱えているタスク</h2>
+    <div>
+      <input type="text unduly id="newTaskInput" placeholder="新しいタスクを入力..." class="custom-input" />
+      <button onclick="addTask()" class="custom-button">追加</button>
+    </div>
+    <ul id="taskList"></ul>
+  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getDatabase, ref, push, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDkjuSa7ejyiBe_HXpKAa5c_wha1jP5aMg",
+      authDomain: "task-manager-dca88.firebaseapp.com",
+      projectId: "task-manager-dca88",
+      storageBucket: "task-manager-dca88.firebasestorage.app",
+      messagingSenderId: "1067146481363",
+      appId: "1:1067146481363:web:435bda68d0a127b3958e26"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Get member name from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const memberName = urlParams.get('name') || '不明';
+    document.getElementById('memberName').textContent = memberName;
+
+    // Define tasksRef after memberName is available
+    const tasksRef = ref(db, `members/${memberName}/tasks`);
+
+    // Comment Management
+    const commentField = document.getElementById('comment');
+    const commentRef = ref(db, `members/${memberName}/comment`);
+    onValue(commentRef, snapshot => {
+      commentField.value = snapshot.val() || '';
+    });
+    commentField.addEventListener('input', () => {
+      set(commentRef, commentField.value);
+    });
+
+    // Task Management
+    const taskListEl = document.getElementById('taskList');
+    const newTaskInput = document.getElementById('newTaskInput');
+
+    function loadTasks() {
+      onValue(tasksRef, snapshot => {
+        taskListEl.innerHTML = '';
+        snapshot.forEach(child => {
+          const taskId = child.key;
+          const taskText = child.val();
+          const li = document.createElement('li');
+          li.textContent = taskText;
+
+          const editBtn = document.createElement('button');
+          editBtn.textContent = '編集';
+          editBtn.className = 'custom-button';
+          editBtn.onclick = () => {
+            const newText = prompt("新しいタスク名", taskText);
+            if (newText && newText.trim()) {
+              set(ref(db, `members/${memberName}/tasks/${taskId}`), newText.trim());
+            }
+          };
+          li.appendChild(editBtn);
+
+          const delBtn = document.createElement('button');
+          delBtn.textContent = '削除';
+          delBtn.className = 'custom-button';
+          delBtn.onclick = () => {
+            remove(ref(db, `members/${memberName}/tasks/${taskId}`));
+          };
+          li.appendChild(delBtn);
+
+          taskListEl.appendChild(li);
+        });
+      });
+    }
+
+    function addTask() {
+      const taskText = newTaskInput.value.trim();
+      if (taskText) {
+        push(tasksRef, taskText);
+        newTaskInput.value = '';
+      } else {
+        alert('タスクを入力してください');
+      }
+    }
+
+    loadTasks();
+  </script>
+</body>
+</html>
